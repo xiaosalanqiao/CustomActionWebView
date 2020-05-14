@@ -5,9 +5,8 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Build;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.DownloadListener;
@@ -26,8 +25,6 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.Toast;
-
-import java.util.Set;
 
 /**
  * 演示WebView中的Api说明、js交互的方法，还有注意事项

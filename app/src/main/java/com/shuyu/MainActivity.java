@@ -1,9 +1,16 @@
 package com.shuyu;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.support.v7.app.AppCompatActivity;
+
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -22,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
 
     View mLadingView;
     CustomActionWebView mCustomActionWebView;
+    MenuItem.OnMenuItemClickListener onMenuItemClickListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,12 +37,22 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mLadingView = findViewById(R.id.loadingView);
-        mCustomActionWebView = (CustomActionWebView)findViewById(R.id.customActionWebView);
-
+        mCustomActionWebView = (CustomActionWebView) findViewById(R.id.customActionWebView);
+        onMenuItemClickListener = new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                String title = (String) menuItem.getTitle();
+                if ("获取文字".equals(title) || "复制".equals(title)) {
+                    mCustomActionWebView.getSelectedData(title);
+                    mCustomActionWebView.releaseAction();
+                }
+                return true;
+            }
+        };
 
         List<String> list = new ArrayList<>();
-        list.add("Item1");
-        list.add("Item2");
+        list.add("获取文字");
+        list.add("复制");
         list.add("APIWeb");
 
         mCustomActionWebView.setWebViewClient(new CustomWebViewClient());
@@ -50,18 +68,29 @@ public class MainActivity extends AppCompatActivity {
         //使用javascript
         mCustomActionWebView.getSettings().setJavaScriptEnabled(true);
         mCustomActionWebView.getSettings().setDomStorageEnabled(true);
-
+        mCustomActionWebView.setOnMenuItemClickListener(onMenuItemClickListener);
 
         //增加点击回调
         mCustomActionWebView.setActionSelectListener(new ActionSelectListener() {
             @Override
             public void onClick(String title, String selectText) {
-                if(title.equals("APIWeb")) {
+                if (title.equals("APIWeb")) {
                     Intent intent = new Intent(MainActivity.this, APIWebViewActivity.class);
                     startActivity(intent);
                     return;
+                } else if ("复制".equals(title)) {
+                    if (!TextUtils.isEmpty(selectText)) {
+                        // 得到剪贴板管理器
+                        ClipboardManager cmb = (ClipboardManager) getApplicationContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                        // 创建一个剪贴数据集，包含一个普通文本数据条目（需要复制的数据）
+                        ClipData clipData = ClipData.newPlainText(null, selectText);
+                        // 把数据集设置（复制）到剪贴板
+                        cmb.setPrimaryClip(clipData);
+                        Toast.makeText(MainActivity.this, "复制成功！", Toast.LENGTH_LONG).show();
+                    }
+                } else {
+                    Toast.makeText(MainActivity.this, "Click Item: " + title + "。\n\nValue: " + selectText, Toast.LENGTH_LONG).show();
                 }
-                Toast.makeText(MainActivity.this, "Click Item: " + title + "。\n\nValue: " + selectText, Toast.LENGTH_LONG).show();
             }
         });
 
@@ -69,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
         mCustomActionWebView.postDelayed(new Runnable() {
             @Override
             public void run() {
-                mCustomActionWebView.loadUrl("http://www.jianshu.com/p/b32187d6e0ad");
+                mCustomActionWebView.loadUrl("https://www.jianshu.com/p/18c1f9e534e2");
             }
         }, 1000);
     }
@@ -78,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        if(mCustomActionWebView != null) {
+        if (mCustomActionWebView != null) {
             mCustomActionWebView.dismissAction();
         }
     }

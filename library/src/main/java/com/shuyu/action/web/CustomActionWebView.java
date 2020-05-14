@@ -3,7 +3,9 @@ package com.shuyu.action.web;
 import android.content.Context;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.ActionMode;
+import android.view.ActionProvider;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.webkit.JavascriptInterface;
@@ -26,6 +28,8 @@ public class CustomActionWebView extends WebView {
 
     ActionSelectListener mActionSelectListener;
 
+    MenuItem.OnMenuItemClickListener onMenuItemClickListener;
+
     public CustomActionWebView(Context context) {
         super(context);
     }
@@ -41,6 +45,7 @@ public class CustomActionWebView extends WebView {
 
     /**
      * 处理item，处理点击
+     *
      * @param actionMode
      */
     private ActionMode resolveActionMode(ActionMode actionMode) {
@@ -49,21 +54,9 @@ public class CustomActionWebView extends WebView {
             mActionMode = actionMode;
             menu.clear();
             for (int i = 0; i < mActionList.size(); i++) {
-                menu.add(mActionList.get(i));
-            }
-            for (int i = 0; i < menu.size(); i++) {
-                MenuItem menuItem = menu.getItem(i);
-                menuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                    @Override
-                    public boolean onMenuItemClick(MenuItem item) {
-                        getSelectedData((String) item.getTitle());
-                        releaseAction();
-                        return true;
-                    }
-                });
+                menu.add(mActionList.get(i)).setOnMenuItemClickListener(onMenuItemClickListener);
             }
         }
-        mActionMode = actionMode;
         return actionMode;
     }
 
@@ -79,7 +72,7 @@ public class CustomActionWebView extends WebView {
         return resolveActionMode(actionMode);
     }
 
-    private void releaseAction() {
+    public void releaseAction() {
         if (mActionMode != null) {
             mActionMode.finish();
             mActionMode = null;
@@ -88,10 +81,10 @@ public class CustomActionWebView extends WebView {
 
     /**
      * 点击的时候，获取网页中选择的文本，回掉到原生中的js接口
+     *
      * @param title 传入点击的item文本，一起通过js返回给原生接口
      */
-    private void getSelectedData(String title) {
-
+    public void getSelectedData(String title) {
         String js = "(function getSelectedText() {" +
                 "var txt;" +
                 "var title = \"" + title + "\";" +
@@ -117,6 +110,7 @@ public class CustomActionWebView extends WebView {
 
     /**
      * 设置弹出action列表
+     *
      * @param actionList
      */
     public void setActionList(List<String> actionList) {
@@ -125,6 +119,7 @@ public class CustomActionWebView extends WebView {
 
     /**
      * 设置点击回掉
+     *
      * @param actionSelectListener
      */
     public void setActionSelectListener(ActionSelectListener actionSelectListener) {
@@ -136,6 +131,20 @@ public class CustomActionWebView extends WebView {
      */
     public void dismissAction() {
         releaseAction();
+    }
+
+    @Override
+    public void setOnClickListener(OnClickListener l) {
+        super.setOnClickListener(l);
+    }
+
+    /**
+     * 设置MenuItemClickListener
+     *
+     * @param menuItemClickListener
+     */
+    public void setOnMenuItemClickListener(MenuItem.OnMenuItemClickListener menuItemClickListener) {
+        this.onMenuItemClickListener = menuItemClickListener;
     }
 
 
@@ -152,7 +161,7 @@ public class CustomActionWebView extends WebView {
 
         @JavascriptInterface
         public void callback(final String value, final String title) {
-            if(mActionSelectListener != null) {
+            if (mActionSelectListener != null) {
                 mActionSelectListener.onClick(title, value);
             }
         }
